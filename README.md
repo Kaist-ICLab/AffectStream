@@ -1,1 +1,1 @@
-# KRAMS
+# KRAMS: Kafka-based Affect Monitoring System
