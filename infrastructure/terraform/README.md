@@ -23,7 +23,7 @@ AWS based architecture is as follows:
 * To use terraform command line for provisioning your own infrastructure, you need to connect your local machine with your AWS account.
 * You can do it as follows:
 
-  1. Create new IAM(AWS user managing service) user in you AWS aacount.
+  1. Create new IAM(AWS user managing service) user in you AWS account.
    
       <p text-align="center">
         <img alt="img.png" src="img/aws_iam.png" width="700"/>
