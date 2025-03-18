@@ -1,7 +1,7 @@
-package dev.iitp.publisher.controller;
+package dev.iitp.producer.controller;
 
-import dev.iitp.publisher.model.chest.SensorRecord;
-import dev.iitp.publisher.service.WatchSensorDataProducer;
+import dev.iitp.producer.model.chest.SensorRecord;
+import dev.iitp.producer.service.WatchSensorDataProducer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;

@@ -1,4 +1,4 @@
-package dev.iitp.publisher.model.wrist;
+package dev.iitp.producer.model.wrist;
 
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;

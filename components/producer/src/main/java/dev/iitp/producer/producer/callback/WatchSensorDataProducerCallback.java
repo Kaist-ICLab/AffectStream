@@ -1,6 +1,6 @@
-package dev.iitp.publisher.producer.callback;
+package dev.iitp.producer.producer.callback;
 
-import dev.iitp.publisher.model.chest.SensorRecord;
+import dev.iitp.producer.model.chest.SensorRecord;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -50,3 +50,4 @@ public class WatchSensorDataProducerCallback implements KafkaSendCallback<String
             timestamp - Long.parseLong(String.valueOf(sensorRecord.get("timestamp")))
         );
     }
+}

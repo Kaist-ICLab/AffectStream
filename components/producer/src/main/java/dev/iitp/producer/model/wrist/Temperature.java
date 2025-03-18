@@ -1,11 +1,11 @@
-package dev.iitp.publisher.model.wrist;
+package dev.iitp.producer.model.wrist;
 
 import lombok.Data;
 
 import java.util.List;
 
 @Data
-public class BloodVolumePressure {
+public class Temperature {
 
     private int hz;
     private List<Double> value;

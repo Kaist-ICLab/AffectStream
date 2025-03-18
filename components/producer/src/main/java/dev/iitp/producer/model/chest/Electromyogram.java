@@ -1,4 +1,4 @@
-package dev.iitp.publisher.model.chest;
+package dev.iitp.producer.model.chest;
 
 import lombok.Data;
 

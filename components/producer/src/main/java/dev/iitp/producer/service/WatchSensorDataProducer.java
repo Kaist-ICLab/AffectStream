@@ -1,8 +1,8 @@
-package dev.iitp.publisher.service;
+package dev.iitp.producer.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import dev.iitp.publisher.model.chest.SensorRecord;
-import dev.iitp.publisher.producer.callback.WatchSensorDataProducerCallback;
+import dev.iitp.producer.model.chest.SensorRecord;
+import dev.iitp.producer.producer.callback.WatchSensorDataProducerCallback;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.generic.GenericRecord;

@@ -1,8 +1,8 @@
-package dev.iitp.publisher.producer.template;
+package dev.iitp.producer.producer.template;
 
 import com.amazonaws.services.schemaregistry.serializers.GlueSchemaRegistryKafkaSerializer;
 import com.amazonaws.services.schemaregistry.utils.AWSSchemaRegistryConstants;
-import dev.iitp.publisher.model.chest.SensorRecord;
+import dev.iitp.producer.model.chest.SensorRecord;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.prometheus.PrometheusMeterRegistry;
 import lombok.RequiredArgsConstructor;

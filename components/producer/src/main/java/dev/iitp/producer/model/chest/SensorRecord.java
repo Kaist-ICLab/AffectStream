@@ -1,4 +1,4 @@
-package dev.iitp.publisher.model.chest;
+package dev.iitp.producer.model.chest;
 
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;

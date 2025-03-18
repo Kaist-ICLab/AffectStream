@@ -9,7 +9,7 @@ ENV KAFKA_HOST ""
 ENV SASL_USERNAME ""
 ENV SASL_PASSWORD ""
 
-COPY build/libs/publisher-$VERSION.jar .
+COPY build/libs/producer-$VERSION.jar .
 COPY tmp/ .
 
-CMD ["sh", "-c", "java -jar -Dspring.profiles.active=$PROFILE publisher-$VERSION.jar"]
+CMD ["sh", "-c", "java -jar -Dspring.profiles.active=$PROFILE producer-$VERSION.jar"]
