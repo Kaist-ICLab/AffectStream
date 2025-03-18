@@ -1,0 +1,43 @@
+# Required connection configs for Kafka producer, consumer, and admin
+spring:
+  kafka:
+    properties:
+      bootstrap:
+        servers: ${KAFKA_HOST} # Kafka broker address
+      sasl:
+        mechanism: SCRAM-SHA-512 # Authentication mechanism (SCRAM-SHA-512)
+        jaas:
+          config: org.apache.kafka.common.security.scram.ScramLoginModule required username='${SASL_USERNAME}' password='${SASL_PASSWORD}'; # SASL authentication credentials
+      security:
+        protocol: SASL_SSL # Use SASL over SSL for secure communication
+      ssl:
+        truststore:
+          location: ./kafka.client.truststore.jks # Path to the SSL truststore file (Ensure this file exists)
+      linger.ms: ${LINGER_MS} # Time to wait before sending batch messages
+      batch.size: ${BATCH_SIZE} # Maximum batch size before sending messages
+      max.request.size: 10485760 # Maximum allowed request size in bytes (10MB)
+  jmx:
+    enabled: true # Enable JMX for monitoring Kafka performance
+
+# Server configurations (Tomcat thread settings)
+server:
+  tomcat:
+    threads:
+      max: 50 # Maximum number of worker threads for Tomcat
+
+# Application management settings
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "metrics, prometheus" # Expose only metrics and Prometheus endpoints
+
+# User-specific settings
+user:
+  topic: ${TOPIC} # Kafka topic name (Set via environment variable)
+  nodeId: 1 # Unique node ID for this instance
+
+# Logging configuration
+logging:
+  level:
+    root: info # Set default logging level to INFO (Change to DEBUG for more details)

@@ -1,0 +1,129 @@
+{
+  "type": "record",
+  "name": "SensorRecord",
+  "fields": [
+    { "name": "user_id", "type": "string" },
+    { "name": "connection_id", "type": "string" },
+    { "name": "timestamp", "type": "long" },
+    { "name": "segment_size", "type": "int" },
+    {
+      "name": "value",
+      "type": {
+        "name": "SensorValue",
+        "type": "record",
+        "fields": [
+          {
+            "name": "chest_acc",
+            "type": {
+              "name": "ChestAccRecord",
+              "type": "record",
+              "fields": [
+                { "name": "hz", "type": "int" },
+                {
+                  "name": "value",
+                  "type": {
+                    "type": "array",
+                    "items": {
+                      "name": "ChestAccAxisRecord",
+                      "type": "record",
+                      "fields": [
+                        { "name": "x", "type": "int" },
+                        { "name": "y", "type": "int" },
+                        { "name": "z", "type": "int" }
+                      ]
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "chest_ecg",
+            "type": {
+              "name": "ChestEcgRecord",
+              "type": "record",
+              "fields": [
+                { "name": "hz", "type": "int" },
+                {
+                  "name": "value",
+                  "type": {
+                    "type": "array",
+                    "items": "int"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "chest_eda",
+            "type": {
+              "name": "ChestEdaRecord",
+              "type": "record",
+              "fields": [
+                { "name": "hz", "type": "int" },
+                {
+                  "name": "value",
+                  "type": {
+                    "type": "array",
+                    "items": "int"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "chest_emg",
+            "type": {
+              "name": "ChestEmgRecord",
+              "type": "record",
+              "fields": [
+                { "name": "hz", "type": "int" },
+                {
+                  "name": "value",
+                  "type": {
+                    "type": "array",
+                    "items": "int"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "chest_temp",
+            "type": {
+              "name": "ChestTempRecord",
+              "type": "record",
+              "fields": [
+                { "name": "hz", "type": "int" },
+                {
+                  "name": "value",
+                  "type": {
+                    "type": "array",
+                    "items": "int"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "chest_resp",
+            "type": {
+              "name": "ChestRespRecord",
+              "type": "record",
+              "fields": [
+                { "name": "hz", "type": "int" },
+                {
+                  "name": "value",
+                  "type": {
+                    "type": "array",
+                    "items": "int"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
