@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafka-client # Name of the deployment
+  namespace: kafka-management # Namespace where the deployment is created
+spec:
+  selector:
+    matchLabels:
+      app: kafka-client # Ensures pods with this label are managed by this deployment
+  replicas: 1 # Number of pod replicas to run (single instance in this case)
+  template:
+    metadata:
+      labels:
+        app: kafka-client # Label to identify the pod
+    spec:
+      containers:
+      - name: client # Container name
+        # ✅ Replace this image with the one built using the provided Dockerfile.
+        image: my-account/kafka-management:latest # Docker image to use for the container
+        securityContext:
+          runAsUser: 0 # Runs as root user (Consider running with a non-root user for security)
+        resources: # Resource limits for the container
+          limits:
+            cpu: 500m # Limits CPU usage to 500 millicores (0.5 vCPU)
+            memory: 768Mi # Limits memory usage to 768MiB
+        env:
+          - name: KAFKA_HOST # Environment variable for Kafka host
+            valueFrom:
+              secretKeyRef:
+                name: kafka-host # Refers to a Kubernetes Secret named 'kafka-host'
+                key: kafka_host.txt # Retrieves the value from 'kafka_host.txt' in the Secret
+          - name: ZOOKEEPER_HOST # Environment variable for Zookeeper host
+            valueFrom:
+              secretKeyRef:
+                name: kafka-host # Refers to the same Secret 'kafka-host'
+                key: zookeeper_host.txt # Retrieves the value from 'zookeeper_host.txt' in the Secret
+          - name: KAFKA_CONFIG # Kafka client configuration file location
+            value: /secrets/client_sasl.properties
+        volumeMounts:
+          - name: secret-volume # Mount the secret volume to the container
+            mountPath: "/secrets" # Mount location inside the container
+            readOnly: true # Ensures the secret volume is read-only
+      volumes:
+        - name: secret-volume # Define a volume named 'secret-volume'
+          secret:
+            secretName: kafka-secret # Uses the Kubernetes Secret 'kafka-secret'
+            optional: false # Fails deployment if the Secret is missing

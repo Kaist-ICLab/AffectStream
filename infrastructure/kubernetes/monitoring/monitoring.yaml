@@ -1,0 +1,102 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana
+  namespace: monitoring
+  labels:
+    app: grafana
+spec:
+  selector:
+    app: grafana
+  type: LoadBalancer
+  ports:
+  - port: 3000
+    targetPort: 3000
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana
+  namespace: monitoring
+  labels:
+    app: grafana
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: grafana
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      name: grafana
+      labels:
+        app: grafana
+    spec:
+      volumes:
+        - name: grafana-config-volume
+          configMap:
+            name: grafana-config
+      containers:
+      - name: grafana
+        image: grafana/grafana
+        ports:
+        - containerPort: 3000
+        volumeMounts:
+        - name: grafana-config-volume
+          mountPath: /etc/grafana
+
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: prom
+  namespace: monitoring
+  labels:
+    app: prom
+spec:
+  selector:
+    app: prom
+  type: LoadBalancer
+  ports:
+    - port: 9090
+      targetPort: 9090
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prom
+  namespace: monitoring
+  labels:
+    app: prom
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prom
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      name: prom
+      labels:
+        app: prom
+    spec:
+      volumes:
+      - name: prometheus-config-volume
+        configMap:
+          name: prometheus-config
+      containers:
+      - name: prom
+        image: prom/prometheus:latest
+        ports:
+        - containerPort: 9090
+        volumeMounts:
+        - name: prometheus-config-volume
+          mountPath: /etc/prometheus

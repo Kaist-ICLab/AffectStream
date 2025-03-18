@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: svc-ac # Name of the ServiceAccount
+  namespace: producer # Namespace where the ServiceAccount is created
+  annotations:
+    eks.amazonaws.com/role-arn: ${AWS_ROLE_ARN} # ⚠️ Sensitive IAM Role ARN (Consider using environment variables instead)

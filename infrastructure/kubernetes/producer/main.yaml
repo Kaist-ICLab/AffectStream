@@ -1,0 +1,74 @@
+# Define a Kubernetes Service for the producer
+apiVersion: v1
+kind: Service
+metadata:
+  name: producer # Name of the service
+  namespace: producer # Service is created in the 'producer' namespace
+  labels:
+    app: pro # Label to identify the application
+spec:
+  selector:
+    app: pro # Selects pods with the label 'app: pro'
+  type: LoadBalancer # Exposes the service externally using a LoadBalancer
+  ports:
+    - port: 8080 # Port exposed by the service
+      targetPort: 8080 # Port on the container that the service routes traffic to
+
+---
+# Define a Kubernetes Deployment for the producer application
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: producer # Name of the deployment
+  namespace: producer # Deployment is created in the 'producer' namespace
+  labels:
+    app: pro # Label to identify the application
+spec:
+  replicas: 10 # Deploys 10 replicas for high availability
+  selector:
+    matchLabels:
+      app: pro # Matches pods with the label 'app: pro'
+  strategy:
+    type: Recreate # Ensures that all existing pods are terminated before new ones are created
+  template:
+    metadata:
+      labels:
+        app: pro # Label assigned to pods created by this deployment
+    spec:
+      containers:
+        - name: pro # Container name
+          # ✅ Replace this image with the one built using the provided Dockerfile.
+          image: my-account/producer:latest # Docker image to use for the container
+          imagePullPolicy: "Always" # Always pull the latest image (useful for debugging)
+          env: # Environment variables (retrieved from Kubernetes Secrets)
+            - name: KAFKA_HOST # Kafka broker address
+              valueFrom:
+                secretKeyRef:
+                  name: cloud-secret
+                  key: kafka_host.txt
+            - name: SASL_USERNAME # Kafka authentication username
+              valueFrom:
+                secretKeyRef:
+                  name: cloud-secret
+                  key: cloud_user.txt
+            - name: SASL_PASSWORD # Kafka authentication password
+              valueFrom:
+                secretKeyRef:
+                  name: cloud-secret
+                  key: cloud_passwd.txt
+            - name: TOPIC # Kafka topic name
+              value: "topic_1"
+            - name: LINGER_MS # Kafka producer linger time (controls batching delay)
+              value: "0"
+            - name: BATCH_SIZE # Kafka producer batch size (controls buffer size before sending)
+              value: "16384"
+          ports:
+            - containerPort: 8080 # Container listens on port 8080
+          resources: # Resource requests and limits
+            requests:
+              cpu: 1000m # Requests 1 vCPU
+              memory: 2048Mi # Requests 2GB memory
+            limits:
+              cpu: 1000m # Limits to 1 vCPU
+              memory: 4096Mi # Limits to 4GB memory
+      serviceAccountName: svc-ac # Assigns a service account for permissions (ensure it exists)

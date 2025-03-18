@@ -1,0 +1,131 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+  namespace: backend
+  labels:
+    app: backend
+spec:
+  selector:
+    app: backend
+  type: LoadBalancer
+  ports:
+  - port: 8080
+    targetPort: 8080
+
+---
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: backend-1
+  namespace: backend
+  labels:
+    id: internal-1
+    app: backend
+spec:
+  containers:
+  - name: backend
+    image: bucket98/backend:system-v1.4
+    env:
+    - name: KAFKA_HOST
+      valueFrom:
+        secretKeyRef:
+          name: cloud-secret
+          key: kafka_host.txt
+    - name: CLOUD_USER
+      valueFrom:
+        secretKeyRef:
+          name: cloud-secret
+          key: cloud_user.txt
+    - name: CLOUD_PASSWD
+      valueFrom:
+        secretKeyRef:
+          name: cloud-secret
+          key: cloud_passwd.txt
+    - name: TOPIC
+      value: "partition3"
+    - name: LINGER_MS
+      value: "0"
+    - name: BATCH_SIZE
+      value: "16384"
+    ports:
+    - containerPort: 8080
+
+---
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: backend-2
+  namespace: backend
+  labels:
+    id: internal-2
+    app: backend
+spec:
+  containers:
+    - name: backend
+      image: bucket98/backend:system-v1.4
+      env:
+      - name: KAFKA_HOST
+        valueFrom:
+          secretKeyRef:
+            name: cloud-secret
+            key: kafka_host.txt
+      - name: CLOUD_USER
+        valueFrom:
+          secretKeyRef:
+            name: cloud-secret
+            key: cloud_user.txt
+      - name: CLOUD_PASSWD
+        valueFrom:
+          secretKeyRef:
+            name: cloud-secret
+            key: cloud_passwd.txt
+      - name: TOPIC
+        value: "partition3"
+      - name: LINGER_MS
+        value: "0"
+      - name: BATCH_SIZE
+        value: "16384"
+      ports:
+      - containerPort: 8080
+
+---
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: backend-3
+  namespace: backend
+  labels:
+    id: internal-3
+    app: backend
+spec:
+  containers:
+    - name: backend
+      image: bucket98/backend:system-v1.4
+      env:
+      - name: KAFKA_HOST
+        valueFrom:
+          secretKeyRef:
+            name: cloud-secret
+            key: kafka_host.txt
+      - name: CLOUD_USER
+        valueFrom:
+          secretKeyRef:
+            name: cloud-secret
+            key: cloud_user.txt
+      - name: CLOUD_PASSWD
+        valueFrom:
+          secretKeyRef:
+            name: cloud-secret
+            key: cloud_passwd.txt
+      - name: TOPIC
+        value: "partition3"
+      - name: LINGER_MS
+        value: "0"
+      - name: BATCH_SIZE
+        value: "16384"
+      ports:
+      - containerPort: 8080

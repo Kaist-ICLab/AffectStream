@@ -1,0 +1,76 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: consumer # Name of the deployment
+  namespace: consumer # Namespace where the deployment is created
+  labels:
+    app: con # Label to identify the deployment
+spec:
+  replicas: 12 # Number of consumer instances
+  selector:
+    matchLabels:
+      app: con # Matches pods with this label
+  strategy:
+    type: Recreate # Ensures all existing pods are terminated before new ones are created
+  template:
+    metadata:
+      labels:
+        app: con # Label assigned to pods created by this deployment
+    spec:
+      containers:
+        - name: consumer # Container name
+          # ✅ Replace this image with the one built using the provided Dockerfile.
+          image: my-account/consumer:latest # Docker image used for the subscriber
+          imagePullPolicy: "Always" # Always pull the latest image (useful for debugging)
+          env: # Environment variables for Kafka and authentication
+            - name: KAFKA_HOST # Kafka broker address
+              valueFrom:
+                secretKeyRef:
+                  name: cloud-secret
+                  key: kafka_host.txt
+            - name: SASL_USERNAME # Kafka authentication username
+              valueFrom:
+                secretKeyRef:
+                  name: cloud-secret
+                  key: cloud_user.txt
+            - name: SASL_PASSWORD # Kafka authentication password
+              valueFrom:
+                secretKeyRef:
+                  name: cloud-secret
+                  key: cloud_passwd.txt
+            - name: IAM_ACCESS_KEY_ID # AWS IAM access key (used for authentication)
+              valueFrom:
+                secretKeyRef:
+                  name: cloud-secret
+                  key: iam_access_key_id.txt
+            - name: IAM_SECRET_ACCESS_KEY # AWS IAM secret access key
+              valueFrom:
+                secretKeyRef:
+                  name: cloud-secret
+                  key: iam_secret_access_key.txt
+            # Kafka Consumer Configuration
+            - name: TOPIC # Kafka topic to subscribe to
+              value: "topic_1"
+            - name: PARTITIONS # Number of Kafka partitions
+              value: "6"
+            - name: CONSUMER_MAX_FETCH_SIZE # Maximum fetch size per partition (in bytes)
+              value: "131072"
+            - name: CONSUMER_GROUP_ID # Consumer group ID
+              value: "test_group_id_1"
+            - name: CONSUMER_INSTANCE_ID # Unique instance ID for each consumer pod
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name # Uses the pod name as the instance ID
+            - name: POSTGRES_USER # PostgreSQL username
+              value: "postgres"
+            - name: POSTGRES_PASSWORD # PostgreSQL password
+              value: "postgres"
+            - name: POSTGRES_PORT # PostgreSQL port
+              value: "5432"
+            - name: POSTGRES_HOST # PostgreSQL service hostname
+              value: "db-internal.analysis"
+          resources: # Resource limits for the container
+            limits:
+              cpu: 1000m # Maximum CPU allocation (1 vCPU)
+              memory: 1536Mi # Maximum memory allocation (1.5GB)
+          command: ["python", "main.py", "worker", "-l", "info"] # Runs `main.py` as a worker with logging level INFO

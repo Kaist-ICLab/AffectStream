@@ -1,0 +1,54 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-internal-1
+  namespace: backend
+  labels:
+    app: backend
+    type: internal
+spec:
+  selector:
+    id: internal-1
+    app: backend
+  type: ClusterIP
+  ports:
+  - port: 8080
+    targetPort: 8080
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-internal-2
+  namespace: backend
+  labels:
+    app: backend
+    type: internal
+spec:
+  selector:
+    id: internal-2
+    app: backend
+  type: ClusterIP
+  ports:
+    - port: 8080
+      targetPort: 8080
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-internal-3
+  namespace: backend
+  labels:
+    app: backend
+    type: internal
+spec:
+  selector:
+    id: internal-3
+    app: backend
+  type: ClusterIP
+  ports:
+  - port: 8080
+    targetPort: 8080
