@@ -1,0 +1,310 @@
+version: '3.8'
+
+services:
+  # Zookeeper - Required for Kafka
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.4.0
+    hostname: zookeeper
+    container_name: affectstream-zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    volumes:
+      - zookeeper-data:/var/lib/zookeeper/data
+      - zookeeper-logs:/var/lib/zookeeper/log
+    networks:
+      - affectstream-network
+
+  # Kafka - Message broker
+  kafka:
+    image: confluentinc/cp-kafka:7.4.0
+    hostname: kafka
+    container_name: affectstream-kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+      - "9997:9997"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+      KAFKA_JMX_PORT: 9997
+      KAFKA_JMX_OPTS: -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Djava.rmi.server.hostname=kafka -Dcom.sun.management.jmxremote.rmi.port=9997
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    networks:
+      - affectstream-network
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-broker-api-versions --bootstrap-server localhost:9092"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # PostgreSQL - Database for consumer results
+  postgres:
+    image: postgres:15-alpine
+    hostname: postgres
+    container_name: affectstream-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: affectstream
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./analysis/latency.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    networks:
+      - affectstream-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # Kafka Management - Topic management and administration
+  kafka-management:
+    build:
+      context: ./components/kafka_management
+      dockerfile: Dockerfile
+    container_name: affectstream-kafka-management
+    depends_on:
+      kafka:
+        condition: service_healthy
+    environment:
+      KAFKA_BROKERS: kafka:29092
+      KAFKA_ZOOKEEPER: zookeeper:2181
+    volumes:
+      - ./components/kafka_management/certs:/opt/bitnami/kafka/config/certs:ro
+    networks:
+      - affectstream-network
+    command: ["sh", "-c", "sleep infinity"]
+
+  # Producer - HTTP server that publishes sensor data to Kafka
+  producer:
+    build:
+      context: ./components/producer
+      dockerfile: Dockerfile
+      args:
+        PROFILE_: "local"
+    container_name: affectstream-producer
+    depends_on:
+      kafka:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+      - "8081:8081"  # Management port
+    environment:
+      SPRING_PROFILES_ACTIVE: local
+      KAFKA_HOST: kafka:29092
+      SASL_USERNAME: ""
+      SASL_PASSWORD: ""
+      # JVM monitoring
+      JAVA_OPTS: >
+        -Dcom.sun.management.jmxremote=true
+        -Dcom.sun.management.jmxremote.port=8081
+        -Dcom.sun.management.jmxremote.authenticate=false
+        -Dcom.sun.management.jmxremote.ssl=false
+        -Dcom.sun.management.jmxremote.rmi.port=8081
+        -Djava.rmi.server.hostname=producer
+    networks:
+      - affectstream-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # Consumer - Processes Kafka messages and stores results in PostgreSQL
+  consumer:
+    build:
+      context: ./components/consumer
+      dockerfile: Dockerfile
+    container_name: affectstream-consumer
+    depends_on:
+      kafka:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    environment:
+      KAFKA_HOST: kafka:29092
+      SASL_USERNAME: ""
+      SASL_PASSWORD: ""
+      TOPIC: chest
+      PARTITIONS: 6
+      CONSUMER_MAX_FETCH_SIZE: 10485760
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: affectstream
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      WINDOW_SIZE: 2
+      OVERLAP_SIZE: 1
+      STORE_HOST: "memory://"
+    networks:
+      - affectstream-network
+    healthcheck:
+      test: ["CMD-SHELL", "python -c 'import psutil; exit(0 if any(proc.name() == \"python\" for proc in psutil.process_iter()) else 1)' || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # Simulator - Locust master for load testing
+  simulator-master:
+    build:
+      context: ./components/simulator
+      dockerfile: Dockerfile
+    container_name: affectstream-simulator-master
+    depends_on:
+      producer:
+        condition: service_healthy
+    ports:
+      - "8089:8089"
+    environment:
+      LOCUST_MODE: master
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: affectstream
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - ./components/simulator/src:/src:ro
+      - ./components/simulator/data:/data:ro
+    networks:
+      - affectstream-network
+    command: ["-f", "locustfile.py", "--master", "-H", "http://producer:8080"]
+
+  # Simulator - Locust worker for load testing
+  simulator-worker:
+    build:
+      context: ./components/simulator
+      dockerfile: Dockerfile
+    container_name: affectstream-simulator-worker
+    depends_on:
+      - simulator-master
+    environment:
+      LOCUST_MODE: worker
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: affectstream
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - ./components/simulator/src:/src:ro
+      - ./components/simulator/data:/data:ro
+    networks:
+      - affectstream-network
+    command: ["-f", "locustfile.py", "--worker", "--master-host", "simulator-master"]
+    deploy:
+      replicas: 2
+
+  # AKHQ - Kafka UI for monitoring and management
+  akhq:
+    image: tchiotludo/akhq:latest
+    hostname: akhq
+    container_name: affectstream-akhq
+    depends_on:
+      kafka:
+        condition: service_healthy
+    ports:
+      - "8090:8080"
+    environment:
+      AKHQ_CONFIGURATION: |
+        akhq:
+          connections:
+            docker-kafka-server:
+              properties:
+                bootstrap.servers: "kafka:29092"
+              schema-registry:
+                url: "http://schema-registry:8081"
+              connect:
+                - name: "connect"
+                  url: "http://connect:8083"
+    networks:
+      - affectstream-network
+
+  # Prometheus - Metrics collection
+  prometheus:
+    image: prom/prometheus:latest
+    hostname: prometheus
+    container_name: affectstream-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    networks:
+      - affectstream-network
+
+  # Grafana - Monitoring dashboard
+  grafana:
+    image: grafana/grafana:latest
+    hostname: grafana
+    container_name: affectstream-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - ./monitoring/grafana/grafana.ini:/etc/grafana/grafana.ini:ro
+      - grafana-data:/var/lib/grafana
+    networks:
+      - affectstream-network
+    depends_on:
+      - prometheus
+
+  # Schema Registry - For Avro schema management (optional)
+  schema-registry:
+    image: confluentinc/cp-schema-registry:7.4.0
+    hostname: schema-registry
+    container_name: affectstream-schema-registry
+    depends_on:
+      - kafka
+    ports:
+      - "8082:8081"
+    environment:
+      SCHEMA_REGISTRY_HOST_NAME: schema-registry
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: 'kafka:29092'
+      SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081
+    networks:
+      - affectstream-network
+
+volumes:
+  kafka-data:
+    driver: local
+  zookeeper-data:
+    driver: local
+  zookeeper-logs:
+    driver: local
+  postgres-data:
+    driver: local
+  prometheus-data:
+    driver: local
+  grafana-data:
+    driver: local
+
+networks:
+  affectstream-network:
+    driver: bridge
+    name: affectstream-network

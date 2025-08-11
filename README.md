@@ -1,5 +1,5 @@
 # AffectStream: Kafka-based Real-time Affect Monitoring System using Wearable Sensors
-Real-time affect monitoring is essential for personalized and adaptive applications in fields like education, healthcare, and customer service. However, existing systems often struggle with scalability and low-latency requirements for processing high-frequency sensor data. To address these challenges, we propose AffectStream, a Kafka-based real-time affect monitoring system that processes wearable sensor data through a cloud-based pub/sub architecture to the applications. AffectStream ensures scalability, fault tolerance, and personalized emotional state analysis. Its robust performance is demonstrated through trace-based evaluations using the WESAD dataset. This open-source framework advances real-time emotion recognition, paving the way for large-scale affective computing applications.
+Real-time affect monitoring is essential for personalized and adaptive applications in fields like education, healthcare, and customer service. However, existing systems often struggle with scalability and low-latency requirements for processing high-frequency sensor data. To address these challenges, we propose AffectStream, a Kafka-based real-time affect monitoring system that processes wearable sensor data through a cloud-based pub/sub architecture to the applications. AffectStream ensures scalability, fault tolerance, and personalized emotional state analysis. Its robust performance is demonstrated through trace-based evaluations using three public datasets (i.e., WESAD, AMIGOS, and GalaxyPPG). This open-source framework advances real-time emotion recognition, paving the way for large-scale affective computing applications.
 
 ## Code Structure Overview
 ```
@@ -31,3 +31,32 @@ This folder manages the deployment of components from the `components/` folder a
 - Conents
     - `kubernetes/`: Contains Kubernetes manifests (`.yaml` files) for deploying and managing services, deployments, and networking.
     - `terraform/`: Infrastructure-as-Code (IaC) configurations for provisioning cloud resources such as databases, compute instances, and networking using Terraform.
+
+
+## Quick Start
+
+### Production Deployment
+For production environments with Kubernetes and Terraform, see the `infrastructure/` directory.
+
+### Local Development (Recommended for Testing)
+For immediate testing without AWS/Terraform dependencies:
+
+```bash
+# Clone the repository
+git clone https://github.com/Kaist-ICLab/AffectStream.git
+cd AffectStream
+
+# Start all services with Docker Compose
+docker-compose up -d
+
+# Create Kafka topics
+make topics
+
+# Access services:
+# - Producer API: http://localhost:8080
+# - Simulator: http://localhost:8089
+# - Kafka UI: http://localhost:8090
+# - Grafana: http://localhost:3000
+```
+
+See [LOCAL_SETUP.md](LOCAL_SETUP.md) for detailed local development instructions.

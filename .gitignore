@@ -7,6 +7,23 @@
 .env
 
 #######################################
+# Docker Compose Local Development
+#######################################
+.env.local
+docker-compose.override.yml
+
+# Docker volumes and data
+kafka-data/
+zookeeper-data/
+postgres-data/
+prometheus-data/
+grafana-data/
+
+# Local logs
+*.log
+logs/
+
+#######################################
 # components/consumer
 #######################################
 cache.dbm

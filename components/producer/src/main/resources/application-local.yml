@@ -1,0 +1,78 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: affectstream-producer
+  profiles:
+    active: local
+  
+  kafka:
+    bootstrap-servers: ${KAFKA_HOST:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.ByteArraySerializer
+      acks: all
+      retries: 3
+      batch-size: 16384
+      linger-ms: 1
+      buffer-memory: 33554432
+      compression-type: lz4
+      properties:
+        enable.idempotence: true
+        max.in.flight.requests.per.connection: 5
+    
+  datasource:
+    url: jdbc:h2:mem:testdb
+    driverClassName: org.h2.Driver
+    username: sa
+    password: password
+    
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+      
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    database-platform: org.hibernate.dialect.H2Dialect
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
+logging:
+  level:
+    dev.iitp.producer: DEBUG
+    org.apache.kafka: INFO
+    org.springframework.kafka: DEBUG
+  pattern:
+    console: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+
+# Application specific configurations
+app:
+  kafka:
+    topic:
+      chest: chest
+      wrist: wrist
+    security:
+      protocol: PLAINTEXT
+      
+  producer:
+    async: true
+    timeout: 30000
+    
+  monitoring:
+    enabled: true
+    interval: 10000

@@ -1,0 +1,45 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  # - "first_rules.yml"
+  # - "second_rules.yml"
+
+scrape_configs:
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Kafka monitoring via JMX
+  - job_name: 'kafka'
+    static_configs:
+      - targets: ['kafka:9997']
+    metrics_path: /metrics
+    scrape_interval: 30s
+
+  # Producer application monitoring
+  - job_name: 'producer'
+    static_configs:
+      - targets: ['producer:8081']
+    metrics_path: /actuator/prometheus
+    scrape_interval: 15s
+
+  # PostgreSQL monitoring (if pg_exporter is added)
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres:5432']
+    scrape_interval: 30s
+
+  # Grafana monitoring
+  - job_name: 'grafana'
+    static_configs:
+      - targets: ['grafana:3000']
+    scrape_interval: 30s
+
+  # AKHQ monitoring
+  - job_name: 'akhq'
+    static_configs:
+      - targets: ['akhq:8080']
+    scrape_interval: 30s
